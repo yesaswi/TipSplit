@@ -21,7 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
   billAmount: z.coerce.number().min(0.01, "Bill amount must be greater than 0."),
-  tipPercentage: z.coerce.number().min(0, "Tip can't be negative.").max(100, "Tip can't exceed 100%."),
+  tipPercentage: z.coerce.number().min(0, "Tip can't be negative."),
   numberOfPeople: z.coerce.number().int().min(1, "At least one person is required."),
   serviceQuality: z.string().optional(),
   roundTotal: z.boolean().default(false),
@@ -44,7 +44,7 @@ export default function TipCalculator() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      billAmount: '' as unknown as number,
+      billAmount: '' as unknown as number, // Keep as empty string for controlled input
       tipPercentage: 15,
       numberOfPeople: 1,
       serviceQuality: '',
@@ -55,12 +55,15 @@ export default function TipCalculator() {
   const { billAmount, tipPercentage, numberOfPeople, roundTotal } = form.watch();
 
   useEffect(() => {
-    if (billAmount && !isNaN(Number(billAmount)) && Number(billAmount) > 0 && tipPercentage !== undefined && numberOfPeople && numberOfPeople > 0) {
-      const bill = Number(billAmount);
-      const tipPercent = Number(tipPercentage) / 100;
-      const people = Number(numberOfPeople);
+    // Ensure all dependent values are valid numbers before calculating
+    const bill = parseFloat(String(billAmount));
+    const tipPercentValue = parseFloat(String(tipPercentage));
+    const people = parseInt(String(numberOfPeople), 10);
 
-      let rawTip = bill * tipPercent;
+    if (!isNaN(bill) && bill > 0 && !isNaN(tipPercentValue) && tipPercentValue >= 0 && !isNaN(people) && people > 0) {
+      const tipPercentDecimal = tipPercentValue / 100;
+
+      let rawTip = bill * tipPercentDecimal;
       let rawTotal = bill + rawTip;
       
       let finalTotal = rawTotal;
@@ -71,7 +74,7 @@ export default function TipCalculator() {
         finalTip = finalTotal - bill;
       }
       
-      if (finalTip < 0) finalTip = 0;
+      if (finalTip < 0) finalTip = 0; // Ensure tip isn't negative after rounding
 
       const perPerson = finalTotal / people;
 
@@ -93,7 +96,7 @@ export default function TipCalculator() {
       form.setError("serviceQuality", { type: "manual", message: "Please describe the service quality." });
       return;
     }
-    if (billAmountValue === undefined || isNaN(Number(billAmountValue)) || Number(billAmountValue) <= 0) {
+    if (billAmountValue === undefined || billAmountValue === null || isNaN(Number(billAmountValue)) || Number(billAmountValue) <= 0) {
       form.setError("billAmount", {type: "manual", message: "Please enter a valid bill amount first."});
       return;
     }
@@ -158,7 +161,14 @@ export default function TipCalculator() {
                     <FormControl>
                       <div className="relative">
                         <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                        <Input type="number" placeholder="0.00" {...field} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} value={field.value === undefined || field.value === null || isNaN(field.value) ? '' : field.value} className="pl-10 text-base" step="0.01" />
+                        <Input 
+                          type="number" 
+                          placeholder="0.00" 
+                          {...field} 
+                          onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} 
+                          value={field.value === undefined || field.value === null || isNaN(field.value) ? '' : String(field.value)} 
+                          className="pl-10 text-base" 
+                          step="0.01" />
                       </div>
                     </FormControl>
                     <FormMessage />
@@ -176,7 +186,13 @@ export default function TipCalculator() {
                       <FormControl>
                         <div className="relative">
                           <Percent className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                          <Input type="number" placeholder="15" {...field} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} value={field.value === undefined || field.value === null || isNaN(field.value) ? '' : field.value} className="pr-10 text-base" />
+                          <Input 
+                            type="number" 
+                            placeholder="15" 
+                            {...field} 
+                            onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} 
+                            value={field.value === undefined || field.value === null || isNaN(field.value) ? '' : String(field.value)} 
+                            className="pr-10 text-base" />
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -192,7 +208,14 @@ export default function TipCalculator() {
                       <FormControl>
                         <div className="relative">
                           <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                          <Input type="number" placeholder="1" {...field} onChange={e => field.onChange(e.target.value === '' ? '' : parseInt(e.target.value, 10))} value={field.value === undefined || field.value === null || isNaN(field.value) ? '' : field.value} className="pl-10 text-base" step="1" />
+                          <Input 
+                            type="number" 
+                            placeholder="1" 
+                            {...field} 
+                            onChange={e => field.onChange(e.target.value === '' ? '' : parseInt(e.target.value, 10))} 
+                            value={field.value === undefined || field.value === null || isNaN(field.value) ? '' : String(field.value)} 
+                            className="pl-10 text-base" 
+                            step="1" />
                         </div>
                       </FormControl>
                       <FormMessage />
