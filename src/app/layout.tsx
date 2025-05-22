@@ -1,14 +1,9 @@
 import type {Metadata} from 'next';
-import { GeistSans } from 'geist/font/sans'; // Corrected import for Geist Sans
+import { GeistSans } from 'geist/font/sans';
 import './globals.css';
-import { Toaster } from "@/components/ui/toaster"; // Added Toaster
+import { Toaster } from "@/components/ui/toaster";
 
-const geistSans = GeistSans({ // Corrected variable name usage if needed, ensure it matches export
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-});
-
-// GeistMono is available if needed, but geistSans is primary for UI
+// GeistMono is available if needed
 // import { GeistMono } from 'geist/font/mono';
 // const geistMono = GeistMono({
 //   variable: '--font-geist-mono',
@@ -16,7 +11,7 @@ const geistSans = GeistSans({ // Corrected variable name usage if needed, ensure
 // });
 
 export const metadata: Metadata = {
-  title: 'TipSplit', // Updated title
+  title: 'TipSplit',
   description: 'Calculate tips and split bills with ease.',
 };
 
@@ -27,7 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} antialiased`}> {/* Simplified font class */}
+      <body className={`${GeistSans.variable} antialiased`}> {/* Use imported GeistSans directly */}
         {children}
         <Toaster />
       </body>
