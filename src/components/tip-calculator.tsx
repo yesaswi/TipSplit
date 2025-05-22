@@ -1,3 +1,4 @@
+
 "use client";
 
 import type * as React from 'react';
@@ -43,7 +44,7 @@ export default function TipCalculator() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      billAmount: '' as unknown as number, // Changed from undefined to empty string
+      billAmount: '' as unknown as number,
       tipPercentage: 15,
       numberOfPeople: 1,
       serviceQuality: '',
@@ -51,12 +52,10 @@ export default function TipCalculator() {
     },
   });
 
-  const watchedValues = form.watch();
+  const { billAmount, tipPercentage, numberOfPeople, roundTotal } = form.watch();
 
   useEffect(() => {
-    const { billAmount, tipPercentage, numberOfPeople, roundTotal } = watchedValues;
-    // Ensure billAmount is a valid number before proceeding
-    if (billAmount && !isNaN(Number(billAmount)) && Number(billAmount) > 0 && tipPercentage !== undefined && numberOfPeople) {
+    if (billAmount && !isNaN(Number(billAmount)) && Number(billAmount) > 0 && tipPercentage !== undefined && numberOfPeople && numberOfPeople > 0) {
       const bill = Number(billAmount);
       const tipPercent = Number(tipPercentage) / 100;
       const people = Number(numberOfPeople);
@@ -72,9 +71,7 @@ export default function TipCalculator() {
         finalTip = finalTotal - bill;
       }
       
-      // Ensure tip is not negative if rounding causes bill to be less than original
       if (finalTip < 0) finalTip = 0;
-
 
       const perPerson = finalTotal / people;
 
@@ -86,18 +83,17 @@ export default function TipCalculator() {
     } else {
       setResults(null);
     }
-  }, [watchedValues]);
+  }, [billAmount, tipPercentage, numberOfPeople, roundTotal]);
 
   const handleAiSuggest = async () => {
-    const serviceQuality = form.getValues("serviceQuality");
-    const billAmount = form.getValues("billAmount");
+    const serviceQualityValue = form.getValues("serviceQuality");
+    const billAmountValue = form.getValues("billAmount");
 
-    if (!serviceQuality || serviceQuality.trim() === "") {
+    if (!serviceQualityValue || serviceQualityValue.trim() === "") {
       form.setError("serviceQuality", { type: "manual", message: "Please describe the service quality." });
       return;
     }
-    // Check if billAmount is a valid number and greater than 0
-    if (billAmount === undefined || isNaN(Number(billAmount)) || Number(billAmount) <= 0) {
+    if (billAmountValue === undefined || isNaN(Number(billAmountValue)) || Number(billAmountValue) <= 0) {
       form.setError("billAmount", {type: "manual", message: "Please enter a valid bill amount first."});
       return;
     }
@@ -105,7 +101,7 @@ export default function TipCalculator() {
     setIsAiLoading(true);
     setAiSuggestion(null);
     try {
-      const suggestion = await suggestTipPercentage({ serviceQuality, billAmount: Number(billAmount) });
+      const suggestion = await suggestTipPercentage({ serviceQuality: serviceQualityValue, billAmount: Number(billAmountValue) });
       setAiSuggestion(suggestion);
       toast({
         title: "AI Suggestion Ready!",
@@ -180,7 +176,7 @@ export default function TipCalculator() {
                       <FormControl>
                         <div className="relative">
                           <Percent className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                          <Input type="number" placeholder="15" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} value={field.value ?? ''} className="pr-10 text-base" />
+                          <Input type="number" placeholder="15" {...field} onChange={e => field.onChange(e.target.value === '' ? '' : parseFloat(e.target.value))} value={field.value === undefined || field.value === null || isNaN(field.value) ? '' : field.value} className="pr-10 text-base" />
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -196,7 +192,7 @@ export default function TipCalculator() {
                       <FormControl>
                         <div className="relative">
                           <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                          <Input type="number" placeholder="1" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))} value={field.value ?? ''} className="pl-10 text-base" step="1" />
+                          <Input type="number" placeholder="1" {...field} onChange={e => field.onChange(e.target.value === '' ? '' : parseInt(e.target.value, 10))} value={field.value === undefined || field.value === null || isNaN(field.value) ? '' : field.value} className="pl-10 text-base" step="1" />
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -292,7 +288,7 @@ export default function TipCalculator() {
       </CardContent>
       <CardFooter className="flex justify-end">
         <Button variant="outline" onClick={() => {
-          form.reset(); // This will now reset billAmount to ''
+          form.reset(); 
           setResults(null);
           setAiSuggestion(null);
         }}>Clear All</Button>
@@ -300,3 +296,4 @@ export default function TipCalculator() {
     </Card>
   );
 }
+
